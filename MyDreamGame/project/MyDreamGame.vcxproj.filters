@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <FxCompile Include="shaders\Object3d.PS.hlsl" />
+    <FxCompile Include="shaders\Object3d.VS.hlsl" />
+    <FxCompile Include="shaders\Particle.VS.hlsl" />
+    <FxCompile Include="shaders\Particle.PS.hlsl" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\Scene\SceneManager.cpp" />
+    <ClCompile Include="src\Scene\GameScene.cpp" />
+    <ClCompile Include="src\Model\Model.cpp" />
+    <ClCompile Include="src\Sprite\Sprite.cpp" />
+    <ClCompile Include="src\Audio\AudioManager.cpp" />
+    <ClCompile Include="src\Input\GamepadInput.cpp" />
+    <ClCompile Include="src\Input\KeyboardInput.cpp" />
+    <ClCompile Include="src\Graphics\DebugCamera.cpp" />
+    <ClCompile Include="externals\imgui\imgui.cpp" />
+    <ClCompile Include="externals\imgui\imgui_demo.cpp" />
+    <ClCompile Include="externals\imgui\imgui_draw.cpp" />
+    <ClCompile Include="externals\imgui\imgui_impl_dx12.cpp" />
+    <ClCompile Include="externals\imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="externals\imgui\imgui_tables.cpp" />
+    <ClCompile Include="externals\imgui\imgui_widgets.cpp" />
+    <ClCompile Include="src\Input\InputManager.cpp" />
+    <ClCompile Include="src\Core\main.cpp" />
+    <ClCompile Include="src\GameObject\Object3D.cpp" />
+    <ClCompile Include="src\GameObject\ResourceObject.cpp" />
+    <ClCompile Include="src\Utility\TransformFunctions.cpp" />
+    <ClCompile Include="src\Utility\UtilityFunctions.cpp" />
+    <ClCompile Include="src\Graphics\TextureManager.cpp" />
+    <ClCompile Include="src\Scene\TitleScene.cpp" />
+    <ClCompile Include="src\Scene\StageSelectScene.cpp" />
+    <ClCompile Include="src\Platform\WindowsApplication.cpp" />
+    <ClCompile Include="src\Sprite\SpriteCommon.cpp" />
+    <ClCompile Include="src\DirectXCommon\DirectXCommon.cpp" />
+    <ClCompile Include="src\DirectXCommon\D3DResourceLeakChecker.cpp" />
+    <ClCompile Include="src\Model\ModelCommon.cpp" />
+    <ClCompile Include="src\Effect\Particle.cpp" />
+    <ClCompile Include="src\Effect\ParticleCommon.cpp" />
+    <ClCompile Include="src\Graphics\Camera.cpp" />
+    <ClCompile Include="src\Graphics\GameCamera.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\Scene\SceneManager.h" />
+    <ClInclude Include="src\Scene\GameScene.h" />
+    <ClInclude Include="src\Model\Model.h" />
+    <ClInclude Include="src\Scene\IScene.h" />
+    <ClInclude Include="src\Sprite\Sprite.h" />
+    <ClInclude Include="src\Audio\AudioManager.h" />
+    <ClInclude Include="src\Input\GamepadInput.h" />
+    <ClInclude Include="src\Input\KeyboardInput.h" />
+    <ClInclude Include="src\Utility\BlendMode.h" />
+    <ClInclude Include="src\Graphics\DebugCamera.h" />
+    <ClInclude Include="externals\imgui\imconfig.h" />
+    <ClInclude Include="externals\imgui\imgui.h" />
+    <ClInclude Include="externals\imgui\imgui_impl_dx12.h" />
+    <ClInclude Include="externals\imgui\imgui_impl_win32.h" />
+    <ClInclude Include="externals\imgui\imgui_internal.h" />
+    <ClInclude Include="externals\imgui\imstb_rectpack.h" />
+    <ClInclude Include="externals\imgui\imstb_textedit.h" />
+    <ClInclude Include="externals\imgui\imstb_truetype.h" />
+    <ClInclude Include="src\Input\InputManager.h" />
+    <ClInclude Include="src\GameObject\Object3D.h" />
+    <ClInclude Include="src\GameObject\ResourceObject.h" />
+    <ClInclude Include="src\Utility\Structs.h" />
+    <ClInclude Include="src\Utility\TransformFunctions.h" />
+    <ClInclude Include="src\Utility\UtilityFunctions.h" />
+    <ClInclude Include="src\Graphics\TextureManager.h" />
+    <ClInclude Include="src\Scene\TitleScene.h" />
+    <ClInclude Include="src\Scene\StageSelectScene.h" />
+    <ClInclude Include="src\Platform\WindowsApplication.h" />
+    <ClInclude Include="src\Sprite\SpriteCommon.h" />
+    <ClInclude Include="src\DirectXCommon\DirectXCommon.h" />
+    <ClInclude Include="src\DirectXCommon\D3DResourceLeakChecker.h" />
+    <ClInclude Include="src\Core\TimeManager.h" />
+    <ClInclude Include="src\Model\ModelCommon.h" />
+    <ClInclude Include="src\Effect\Particle.h" />
+    <ClInclude Include="src\Effect\ParticleCommon.h" />
+    <ClInclude Include="src\Graphics\Camera.h" />
+    <ClInclude Include="src\Graphics\GameCamera.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="externals\imgui\LICENSE.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Engin">
+      <UniqueIdentifier>{d38e283d-a6dd-4a4d-b96b-2e8e67efd161}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Aprication">
+      <UniqueIdentifier>{448cf43c-7645-438d-b0dc-40d10a8a8f31}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\Particle.hlsli" />
+  </ItemGroup>
+</Project>
