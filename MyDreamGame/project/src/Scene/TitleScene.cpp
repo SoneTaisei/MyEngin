@@ -15,7 +15,6 @@ TitleScene::~TitleScene() {
 void TitleScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList) {
 	commandList_ = commandList;
 
-	Microsoft::WRL::ComPtr<ID3D12Device> device;
 }
 
 void TitleScene::Update(SceneManager *sceneManager) {

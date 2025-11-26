@@ -3,7 +3,11 @@
 #include <wrl.h>
 #include <vector>
 #include <string>
+#include <list>
 #include "Utility/Utilityfunctions.h"
+#include "Utility/BlendMode.h"
+
+class Particle;
 
 // 共通の頂点データ構造体
 struct ParticleVertexData {
@@ -17,12 +21,21 @@ public:
     void Initialize(ID3D12Device *device);
     void PreDraw(ID3D12GraphicsCommandList *commandList);
 
+    // 登録されている全パーティクルを描画する
+    void DrawAll();
+
+    // リスト管理用
+    void AddParticle(Particle *particle);
+    void RemoveParticle(Particle *particle);
+
+    // ブレンドモード切り替え関数 (BlendMode型を受け取る)
+    void SetBlendMode(BlendMode blendMode);
+
     // ゲッター
     ID3D12Device *GetDevice() const { return device_; }
     ID3D12GraphicsCommandList *GetCommandList() const { return commandList_; }
     const D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() const { return vertexBufferView_; }
     const Microsoft::WRL::ComPtr<ID3D12RootSignature> &GetRootSignature() const { return rootSignature_; }
-    const Microsoft::WRL::ComPtr<ID3D12PipelineState> &GetPipelineState() const { return pipelineState_; }
     UINT GetVertexCount() const { return static_cast<UINT>(vertices_.size()); }
 
 private:
@@ -35,7 +48,12 @@ private:
     ID3D12GraphicsCommandList *commandList_ = nullptr;
 
     Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature_;
-    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState_;
+
+    // PSOを配列で管理 (kCountOfBlendMode は BlendMode.h で定義されている数)
+    Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStates_[kCountOfBlnedMode];
+
+    // 全パーティクルのリスト
+    std::list<Particle *> particles_;
 
     // 共通の板ポリゴンデータ
     std::vector<ParticleVertexData> vertices_;

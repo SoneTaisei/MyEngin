@@ -263,9 +263,7 @@ void WindowsApplication::Run() {
 			// [3] DirectionalLight (CBV b1)
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource_->GetGPUVirtualAddress());
 
-			// 3. 個別パーティクルの描画
 			particle_->Draw();
-
 
 			// ImGuiの描画
 			ImGui::Render();
