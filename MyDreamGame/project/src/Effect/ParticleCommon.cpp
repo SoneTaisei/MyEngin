@@ -21,12 +21,18 @@ void ParticleCommon::PreDraw(ID3D12GraphicsCommandList *commandList) {
 
     // パイプラインステートの設定
     commandList_->SetGraphicsRootSignature(rootSignature_.Get());
-    commandList_->SetPipelineState(pipelineState_.Get());
     commandList_->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
     // DescriptorHeapの設定 (TextureManagerから借りる)
     ID3D12DescriptorHeap *descriptorHeaps[] = { TextureManager::GetInstance()->GetSrvDescriptorHeap() };
     commandList_->SetDescriptorHeaps(1, descriptorHeaps);
+}
+
+void ParticleCommon::SetBlendMode(BlendMode blendMode) {
+    // 範囲チェック
+    if(blendMode >= 0 && blendMode < kCountOfBlnedMode) {
+        commandList_->SetPipelineState(pipelineStates_[blendMode].Get());
+    }
 }
 
 void ParticleCommon::CreateRootSignature() {
@@ -94,7 +100,6 @@ void ParticleCommon::CreateRootSignature() {
 }
 
 void ParticleCommon::CreatePipelineState() {
-    // シェーダーコンパイルとPSO作成 (WindowsApplication.cppの内容を移植)
     IDxcUtils *dxcUtils = nullptr;
     IDxcCompiler3 *dxcCompiler = nullptr;
     IDxcIncludeHandler *includeHandler = nullptr;
@@ -102,20 +107,18 @@ void ParticleCommon::CreatePipelineState() {
     DxcCreateInstance(CLSID_DxcCompiler, IID_PPV_ARGS(&dxcCompiler));
     dxcUtils->CreateDefaultIncludeHandler(&includeHandler);
 
+    // シェーダーコンパイル処理 (lambda) は変更なし
     auto CompileShader = [&](const std::wstring &filePath, const wchar_t *profile) {
+        // ...元のコードと同じ...
         IDxcBlobEncoding *sourceBlob = nullptr;
         if(FAILED(dxcUtils->LoadFile(filePath.c_str(), nullptr, &sourceBlob))) return Microsoft::WRL::ComPtr<ID3DBlob>();
-
         LPCWSTR arguments[] = { filePath.c_str(), L"-E", L"main", L"-T", profile, L"-Zi", L"-Qembed_debug", L"-Od", L"-Zpr" };
-
         DxcBuffer buffer = {};
         buffer.Ptr = sourceBlob->GetBufferPointer();
         buffer.Size = sourceBlob->GetBufferSize();
         buffer.Encoding = DXC_CP_UTF8;
-
         IDxcResult *result = nullptr;
         dxcCompiler->Compile(&buffer, arguments, _countof(arguments), includeHandler, IID_PPV_ARGS(&result));
-
         IDxcBlobUtf8 *errorBlob = nullptr;
         result->GetOutput(DXC_OUT_ERRORS, IID_PPV_ARGS(&errorBlob), nullptr);
         if(errorBlob && errorBlob->GetStringLength() > 0) {
@@ -143,28 +146,85 @@ void ParticleCommon::CreatePipelineState() {
     psoDesc.InputLayout = { inputElements, _countof(inputElements) };
     psoDesc.VS = { vsBlob->GetBufferPointer(), vsBlob->GetBufferSize() };
     psoDesc.PS = { psBlob->GetBufferPointer(), psBlob->GetBufferSize() };
-    psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-    // 加算合成にする場合は以下を有効化
-    // psoDesc.BlendState.RenderTarget[0].BlendEnable = true;
-    // psoDesc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
-    // psoDesc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
-    // psoDesc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
 
     psoDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
+    psoDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE; // 両面描画
+
     psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-    // 半透明の場合はデプス書き込みをOFFにすることが多い
-    // psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
+    // パーティクルは半透明が多いので、デプス書き込みはOFFにすることが一般的
+    psoDesc.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ZERO;
 
     psoDesc.DSVFormat = DXGI_FORMAT_D24_UNORM_S8_UINT;
     psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
     psoDesc.NumRenderTargets = 1;
     psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     psoDesc.SampleDesc.Count = 1;
-
     psoDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;
 
-    device_->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineState_));
+    // 【重要】ループして全てのブレンドモードのPSOを作成する
+    for(int i = 0; i < kCountOfBlnedMode; ++i) {
+        D3D12_BLEND_DESC blendDesc = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+
+        switch(i) {
+        case kBlendModeNone:
+            blendDesc.RenderTarget[0].BlendEnable = FALSE;
+            break;
+        case kBlendModeNomal:
+            blendDesc.RenderTarget[0].BlendEnable = TRUE;
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            break;
+        case kBlendModeAdd:
+            blendDesc.RenderTarget[0].BlendEnable = TRUE;
+            // 加算: 原色 * Alpha + 背景 * 1
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            break;
+        case kBlnedModeSubtract:
+            blendDesc.RenderTarget[0].BlendEnable = TRUE;
+            // 減算: 背景 * 1 - 原色 * Alpha
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_REV_SUBTRACT;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            break;
+        case kBlendModeMaltily:
+            blendDesc.RenderTarget[0].BlendEnable = TRUE;
+            // 乗算: 原色 * 0 + 背景 * 原色
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_SRC_COLOR;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            break;
+        case kBlendModeScreen:
+            blendDesc.RenderTarget[0].BlendEnable = TRUE;
+            // スクリーン: 原色 * (1-背景) + 背景 * 1
+            blendDesc.RenderTarget[0].SrcBlend = D3D12_BLEND_INV_DEST_COLOR;
+            blendDesc.RenderTarget[0].DestBlend = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+            blendDesc.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ONE;
+            blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
+            blendDesc.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+            break;
+        }
+
+        psoDesc.BlendState = blendDesc;
+
+        // 配列のi番目に生成して格納
+        device_->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&pipelineStates_[i]));
+    }
 
     dxcUtils->Release();
     dxcCompiler->Release();

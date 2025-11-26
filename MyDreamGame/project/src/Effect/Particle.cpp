@@ -3,10 +3,11 @@
 #include "Utility/TransformFunctions.h"
 #include <cassert>
 
-void Particle::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex) {
+void Particle::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex, BlendMode blendMode) {
     particleCommon_ = particleCommon;
     kParticleCount_ = count;
     ID3D12Device *device = particleCommon_->GetDevice();
+    blendMode_ = blendMode;
 
     // 1. Instancingリソースの作成
     UINT size = kParticleCount_ * sizeof(TransformMatrix);
@@ -70,6 +71,9 @@ void Particle::Update(const Matrix4x4 &viewProjection) {
 
 void Particle::Draw() {
     ID3D12GraphicsCommandList *commandList = particleCommon_->GetCommandList();
+
+    // ここでブレンドモードに応じたPSOをセットする
+    particleCommon_->SetBlendMode(blendMode_);
 
     // 頂点バッファセット (Commonが持っている板ポリゴン)
     commandList->IASetVertexBuffers(0, 1, &particleCommon_->GetVertexBufferView());
