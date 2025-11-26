@@ -9,7 +9,7 @@ Particle::~Particle() {
     }
 }
 
-void Particle::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex) {
+void Particle::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex, BlendMode blendMode) {
     particleCommon_ = particleCommon;
     kParticleCount_ = count;
     ID3D12Device *device = particleCommon_->GetDevice();

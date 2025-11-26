@@ -263,6 +263,8 @@ void WindowsApplication::Run() {
 			// [3] DirectionalLight (CBV b1)
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource_->GetGPUVirtualAddress());
 
+			particle_->Draw();
+
 			// ImGuiの描画
 			ImGui::Render();
 			ImGui_ImplDX12_RenderDrawData(ImGui::GetDrawData(), commandList);
