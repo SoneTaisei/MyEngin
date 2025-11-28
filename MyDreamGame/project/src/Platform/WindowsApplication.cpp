@@ -56,7 +56,7 @@ void WindowsApplication::Initialize() {
 
 	hwnd_ = CreateWindow(
 		wc_.lpszClassName,
-		L"MyDreamGame",
+		L"LE2B_13_ソネ_タイセイ",
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,
