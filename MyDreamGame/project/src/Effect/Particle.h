@@ -10,6 +10,16 @@
 #include <list>
 #include <random>
 
+struct AABB {
+    Vector3 min;
+    Vector3 max;
+};
+
+struct AccelerationField {
+    Vector3 acceleration; // 加速度
+    AABB area;            // 範囲
+};
+
 struct Emitter {
     Transform transform; // エミッタのTransform（発生位置など）
     uint32_t count;      // 一回で発生する数
@@ -69,6 +79,9 @@ private:
     // 内部で1つ分のパーティクルデータを生成するヘルパー関数
     ParticleData MakeNewParticle();
 
+    // 当たり判定関数
+    bool IsCollision(const AABB &aabb, const Vector3 &point);
+
     // vector から list へ変更
     std::list<ParticleData> particles_;
 
@@ -99,4 +112,7 @@ private:
 
     // このパーティクルマネージャが持つデフォルトのエミッタ
     Emitter emitter_{};
+
+    // フィールドのメンバ変数
+    AccelerationField accelerationField_;
 };
