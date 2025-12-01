@@ -90,6 +90,17 @@ void Particle::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon 
     // InitializeにCommandListを渡すように変更するのが良い。
     // 今回は簡易的にロード処理を呼ぶ (内部でロード済みならハンドルだけ返ってくる)
     textureIndex_ = TextureManager::GetInstance()->Load(textureFilePath, commandList);
+
+    // +x方向に15m/s、範囲は原点中心に -1 ~ 1
+    accelerationField_.acceleration = { 15.0f, 0.0f, 0.0f };
+    accelerationField_.area.min = { -1.0f, -1.0f, -1.0f };
+    accelerationField_.area.max = { 1.0f, 1.0f, 1.0f };
+}
+
+bool Particle::IsCollision(const AABB &aabb, const Vector3 &point) {
+    return (point.x >= aabb.min.x && point.x <= aabb.max.x &&
+            point.y >= aabb.min.y && point.y <= aabb.max.y &&
+            point.z >= aabb.min.z && point.z <= aabb.max.z);
 }
 
 ParticleData Particle::MakeNewParticle(const Vector3 &translate) {
@@ -184,7 +195,7 @@ void Particle::Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMa
     billboardMatrix.m[3][1] = 0.0f;
     billboardMatrix.m[3][2] = 0.0f;
 
-    // ■ 変更: イテレータを使用してリストを回す
+    // イテレータを使用してリストを回す
     for(auto it = particles_.begin(); it != particles_.end(); ) {
 
         // ■ 資料にある「寿命チェックして削除」する処理
@@ -193,11 +204,18 @@ void Particle::Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMa
             continue; // 以降の処理を飛ばして次のループへ
         }
 
-        // --- 更新処理 ---
+        // 範囲内か判定
+        if(IsCollision(accelerationField_.area, it->transform.translate)) {
+            // 範囲内なら加速度を加算 (velocity += acceleration * deltaTime)
+            it->velocity.x += accelerationField_.acceleration.x * kDeltaTime;
+            it->velocity.y += accelerationField_.acceleration.y * kDeltaTime;
+            it->velocity.z += accelerationField_.acceleration.z * kDeltaTime;
+        }
+
+        // その後に移動計算 (既存の処理)
         it->transform.translate.x += it->velocity.x * kDeltaTime;
         it->transform.translate.y += it->velocity.y * kDeltaTime;
         it->transform.translate.z += it->velocity.z * kDeltaTime;
-        it->currentTime += kDeltaTime;
 
         // 行列計算
         Matrix4x4 scaleMatrix = TransformFunctions::MakeScaleMatrix(it->transform.scale);
