@@ -111,7 +111,7 @@ void WindowsApplication::Initialize() {
 	particleCommon_->Initialize(device);
 
 	// Particle (インスタンス) の生成と初期化
-	particle_ = std::make_unique<Particle>();
+	particle_ = std::make_unique<ParticleManager>();
 	// モデルやテクスチャのロード、初期設定
 	// index 99 は仮のSRVインデックス、10はパーティクル数
 	particle_->Initialize(commandList,particleCommon_.get(), 10, "./resources/circle.png", 99,BlendMode::kBlendModeAdd);
@@ -239,11 +239,6 @@ void WindowsApplication::Run() {
 				activeCamera_->GetTranslation()   // Translate (現在アクティブなカメラの座標)
 			);
 
-			// ゲームループのどこか
-			if(ImGui::Button("Add Particle")) {
-				// 3個追加する
-				particle_->Emit(3);
-			}
 
 			particle_->DrawImGui();
 
