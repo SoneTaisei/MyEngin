@@ -17,7 +17,7 @@
 #include "Model/ModelCommon.h"
 
 #include "Effect/ParticleCommon.h"
-#include "Effect/Particle.h"
+#include "Effect/ParticleManager.h"
 
 class WindowsApplication {
 public:
@@ -48,7 +48,7 @@ private:
 
 	// パーティクル共通部・個別パーティクル
 	std::unique_ptr<ParticleCommon> particleCommon_;
-	std::unique_ptr<Particle> particle_;
+	std::unique_ptr<ParticleManager> particle_;
 
 	// --- DirectX関連以外のメンバ変数 ---
 	std::unique_ptr<SceneManager> sceneManager_;

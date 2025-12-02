@@ -3,7 +3,7 @@
 #include <format>
 #include <dxcapi.h>
 #include "Graphics/TextureManager.h"
-#include "Effect/Particle.h" // Particleの定義が必要なため追加
+#include "Effect/ParticleManager.h" // Particleの定義が必要なため追加
 
 #pragma comment(lib, "dxcompiler.lib")
 
@@ -57,18 +57,18 @@ void ParticleCommon::SetBlendMode(BlendMode blendMode) {
 }
 
 // リストへの追加
-void ParticleCommon::AddParticle(Particle *particle) {
-    particles_.push_back(particle);
+void ParticleCommon::AddParticle(ParticleManager *ParticleManager) {
+    particles_.push_back(ParticleManager);
 }
 
 // リストからの削除
-void ParticleCommon::RemoveParticle(Particle *particle) {
-    particles_.remove(particle);
+void ParticleCommon::RemoveParticle(ParticleManager *ParticleManager) {
+    particles_.remove(ParticleManager);
 }
 
 // 一括描画
 void ParticleCommon::DrawAll() {
-    for(Particle *particle : particles_) {
+    for(ParticleManager *particle : particles_) {
         particle->Draw();
     }
 }

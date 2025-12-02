@@ -7,7 +7,7 @@
 #include "Utility/Utilityfunctions.h"
 #include "Utility/BlendMode.h"
 
-class Particle;
+class ParticleManager;
 
 // 共通の頂点データ構造体
 struct ParticleVertexData {
@@ -29,8 +29,8 @@ public:
     void DrawAll();
 
     // リスト管理用
-    void AddParticle(Particle *particle);
-    void RemoveParticle(Particle *particle);
+    void AddParticle(ParticleManager *ParticleManager);
+    void RemoveParticle(ParticleManager *ParticleManager);
 
     // ブレンドモード切り替え関数 (BlendMode型を受け取る)
     void SetBlendMode(BlendMode blendMode);
@@ -57,7 +57,7 @@ private:
     Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineStates_[kCountOfBlnedMode];
 
     // 全パーティクルのリスト
-    std::list<Particle *> particles_;
+    std::list<ParticleManager *> particles_;
 
     // バッファにデータを書き込むためのポインタ
     Matrix4x4 viewProjection_;

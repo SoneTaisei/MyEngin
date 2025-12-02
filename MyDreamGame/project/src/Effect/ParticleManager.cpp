@@ -1,17 +1,17 @@
-#include "Particle.h"
+#include "ParticleManager.h"
 #include "Graphics/TextureManager.h"
 #include "Utility/TransformFunctions.h"
 #include <cassert>
 #include <random>
 //#include "imgui.h"
 
-Particle::~Particle() {
+ParticleManager::~ParticleManager() {
     if(particleCommon_) {
         particleCommon_->RemoveParticle(this);
     }
 }
 
-void Particle::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex, BlendMode blendMode) {
+void ParticleManager::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex, BlendMode blendMode) {
     particleCommon_ = particleCommon;
     kParticleCount_ = count;
     ID3D12Device *device = particleCommon_->GetDevice();
@@ -97,13 +97,13 @@ void Particle::Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon 
     accelerationField_.area.max = { 1.0f, 1.0f, 1.0f };
 }
 
-bool Particle::IsCollision(const AABB &aabb, const Vector3 &point) {
+bool ParticleManager::IsCollision(const AABB &aabb, const Vector3 &point) {
     return (point.x >= aabb.min.x && point.x <= aabb.max.x &&
             point.y >= aabb.min.y && point.y <= aabb.max.y &&
             point.z >= aabb.min.z && point.z <= aabb.max.z);
 }
 
-ParticleData Particle::MakeNewParticle(const Vector3 &translate) {
+ParticleData ParticleManager::MakeNewParticle(const Vector3 &translate) {
     ParticleData p;
 
     std::uniform_real_distribution<float> distribution(-1.0f, 1.0f);
@@ -130,7 +130,7 @@ ParticleData Particle::MakeNewParticle(const Vector3 &translate) {
     return p;
 }
 
-std::list<ParticleData> Particle::EmitInternal(const Emitter &emitter) {
+std::list<ParticleData> ParticleManager::EmitInternal(const Emitter &emitter) {
     std::list<ParticleData> newParticles;
     for(uint32_t count = 0; count < emitter.count; ++count) {
         // エミッタの位置を渡して生成
@@ -139,7 +139,7 @@ std::list<ParticleData> Particle::EmitInternal(const Emitter &emitter) {
     return newParticles;
 }
 
-ParticleData Particle::MakeNewParticle() {
+ParticleData ParticleManager::MakeNewParticle() {
     ParticleData p;
 
     // 分布の設定
@@ -159,86 +159,16 @@ ParticleData Particle::MakeNewParticle() {
     return p;
 }
 
-void Particle::Emit(uint32_t count) {
-    for(uint32_t i = 0; i < count; ++i) {
-        particles_.push_back(MakeNewParticle());
+void ParticleManager::Emit(const Emitter &emitter) {
+    for(uint32_t count = 0; count < emitter.count; ++count) {
+        particles_.push_back(MakeNewParticle(emitter.transform.translate));
     }
 }
 
-void Particle::Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix) {
-    // 時間の定義 (資料通り固定FPS前提)
-    const float kDeltaTime = 1.0f / 60.0f;
-    //const float kDeltaTime = 0.0f;
-
-    emitter_.frequencyTime += kDeltaTime; // 時刻を進める
-
-    // 頻度より大きくなったら発生
-    if(emitter_.frequency <= emitter_.frequencyTime) {
-        // 発生させてリストに結合
-        particles_.splice(particles_.end(), EmitInternal(emitter_));
-
-        // 余計に過ぎた時間も加味して時刻をリセット
-        emitter_.frequencyTime -= emitter_.frequency;
-    }
-
-    numActiveParticles_ = 0;
-
-    // 1. 裏面が見えているので反転させる行列 (Y軸でπ回転)
-    Matrix4x4 backToFrontMatrix = TransformFunctions::MakeRoteYMatrix(std::numbers::pi_v<float>);
-
-    // 2. カメラの回転を適用する (BillboardMatrixの作成)
-    //    ビルボード行列 = 裏面反転行列 * カメラ行列
-    Matrix4x4 billboardMatrix = TransformFunctions::Multiply(backToFrontMatrix, cameraMatrix);
-
-    // 3. 平行移動成分を削除する (カメラの回転だけを利用するため)
-    billboardMatrix.m[3][0] = 0.0f;
-    billboardMatrix.m[3][1] = 0.0f;
-    billboardMatrix.m[3][2] = 0.0f;
-
-    // イテレータを使用してリストを回す
-    for(auto it = particles_.begin(); it != particles_.end(); ) {
-
-        // ■ 資料にある「寿命チェックして削除」する処理
-        if(it->lifeTime <= it->currentTime) {
-            it = particles_.erase(it); // 削除し、次のイテレータを取得
-            continue; // 以降の処理を飛ばして次のループへ
-        }
-
-        // 範囲内か判定
-        if(IsCollision(accelerationField_.area, it->transform.translate)) {
-            // 範囲内なら加速度を加算 (velocity += acceleration * deltaTime)
-            it->velocity.x += accelerationField_.acceleration.x * kDeltaTime;
-            it->velocity.y += accelerationField_.acceleration.y * kDeltaTime;
-            it->velocity.z += accelerationField_.acceleration.z * kDeltaTime;
-        }
-
-        // その後に移動計算 (既存の処理)
-        it->transform.translate.x += it->velocity.x * kDeltaTime;
-        it->transform.translate.y += it->velocity.y * kDeltaTime;
-        it->transform.translate.z += it->velocity.z * kDeltaTime;
-
-        // 行列計算
-        Matrix4x4 scaleMatrix = TransformFunctions::MakeScaleMatrix(it->transform.scale);
-        Matrix4x4 translateMatrix = TransformFunctions::MakeTranslateMatrix(it->transform.translate);
-        Matrix4x4 stateMatrix = TransformFunctions::Multiply(scaleMatrix, billboardMatrix);
-        Matrix4x4 worldMatrix = TransformFunctions::Multiply(stateMatrix, translateMatrix);
-        Matrix4x4 wvpMatrix = TransformFunctions::Multiply(worldMatrix, viewProjection);
-
-        // ■ 資料にある「バッファオーバーラン対策」
-        // GPUに送るデータは最大数(kParticleCount_)を超えてはいけない
-        if(numActiveParticles_ < kParticleCount_) {
-            instancingData_[numActiveParticles_].World = worldMatrix;
-            instancingData_[numActiveParticles_].WVP = wvpMatrix;
-            instancingData_[numActiveParticles_].color = it->color;
-            numActiveParticles_++;
-        }
-
-        // 次のパーティクルへ
-        ++it;
-    }
+void ParticleManager::Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix) {
 }
 
-void Particle::DrawImGui() {
+void ParticleManager::DrawImGui() {
     // Emitterの座標をいじる
     // 資料の記述: ImGui::DragFloat3("EmitterTranslate", &emitter.transform.translate.x, 0.01f, -100.0f, 100.0f);
 
@@ -250,7 +180,7 @@ void Particle::DrawImGui() {
     ImGui::DragFloat("Emitter Frequency", &emitter_.frequency, 0.01f, 0.0f, 10.0f);
 }
 
-void Particle::Draw() {
+void ParticleManager::Draw() {
     ID3D12GraphicsCommandList *commandList = particleCommon_->GetCommandList();
     particleCommon_->SetBlendMode(blendMode_);
 
@@ -276,5 +206,36 @@ void Particle::Draw() {
     // インスタンシング描画
     if(numActiveParticles_ > 0) {
         commandList->DrawInstanced(particleCommon_->GetVertexCount(), numActiveParticles_, 0, 0);
+    }
+}
+
+void ParticleManager::TransferToGPU(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix) {
+
+    numActiveParticles_ = 0;
+
+    // 1. ビルボード行列の計算
+    Matrix4x4 backToFrontMatrix = TransformFunctions::MakeRoteYMatrix(std::numbers::pi_v<float>);
+    Matrix4x4 billboardMatrix = TransformFunctions::Multiply(backToFrontMatrix, cameraMatrix);
+    billboardMatrix.m[3][0] = 0.0f;
+    billboardMatrix.m[3][1] = 0.0f;
+    billboardMatrix.m[3][2] = 0.0f;
+
+    // 2. 全パーティクルをループしてGPUバッファに書き込む
+    for(auto it = particles_.begin(); it != particles_.end(); ++it) {
+        if(numActiveParticles_ >= kParticleCount_) break;
+
+        // 行列計算
+        Matrix4x4 scaleMatrix = TransformFunctions::MakeScaleMatrix(it->transform.scale);
+        Matrix4x4 translateMatrix = TransformFunctions::MakeTranslateMatrix(it->transform.translate);
+        Matrix4x4 stateMatrix = TransformFunctions::Multiply(scaleMatrix, billboardMatrix);
+        Matrix4x4 worldMatrix = TransformFunctions::Multiply(stateMatrix, translateMatrix);
+        Matrix4x4 wvpMatrix = TransformFunctions::Multiply(worldMatrix, viewProjection);
+
+        // データセット
+        instancingData_[numActiveParticles_].World = worldMatrix;
+        instancingData_[numActiveParticles_].WVP = wvpMatrix;
+        instancingData_[numActiveParticles_].color = it->color;
+
+        numActiveParticles_++;
     }
 }

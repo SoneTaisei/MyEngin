@@ -43,32 +43,32 @@ struct ParticleForGPU {
     Vector4 color; // 色
 };
 
-class Particle {
+class ParticleManager {
 public:
 
-    Particle() = default;
-    ~Particle();
+    ParticleManager() = default;
+    virtual~ParticleManager();
     // 初期化
     // count: パーティクルの最大数
     // srvIndex: SRVを作るDescriptorHeapの場所(WindowsApplication.cppで計算していたindex)
     void Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex, BlendMode blendMode = kBlendModeNomal);
 
     // 更新
-    void Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix);
+    virtual void Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix);
 
     // 描画
     void Draw();
 
     // 外部からパーティクルを発生させるための関数
-    void Emit(uint32_t count);
+    void Emit(const Emitter &emitter);
 
     // セッター
     void SetBlendMode(BlendMode blendMode) { blendMode_ = blendMode; }
 
-    // ■ 追加: ImGuiを描画する関数
+    // ImGuiを描画する関数
     void DrawImGui();
 
-private:
+protected:
 
     // 座標オフセットを受け取れるように変更
     ParticleData MakeNewParticle(const Vector3 &translate);
@@ -81,6 +81,9 @@ private:
 
     // 当たり判定関数
     bool IsCollision(const AABB &aabb, const Vector3 &point);
+
+    // Updateの最後にこれを呼ばないと描画されない
+    void TransferToGPU(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix);
 
     // vector から list へ変更
     std::list<ParticleData> particles_;
