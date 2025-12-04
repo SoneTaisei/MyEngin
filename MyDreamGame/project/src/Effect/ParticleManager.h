@@ -54,10 +54,10 @@ public:
     void Initialize(ID3D12GraphicsCommandList *commandList,ParticleCommon *particleCommon, uint32_t count, const std::string &textureFilePath, int srvIndex, BlendMode blendMode = kBlendModeNomal);
 
     // 更新
-    virtual void Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix);
+    virtual void Update();
 
     // 描画
-    void Draw();
+    void Draw(const Matrix4x4 &viewProjection);
 
     // 外部からパーティクルを発生させるための関数
     void Emit(const Emitter &emitter);
@@ -83,7 +83,7 @@ protected:
     bool IsCollision(const AABB &aabb, const Vector3 &point);
 
     // Updateの最後にこれを呼ばないと描画されない
-    void TransferToGPU(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix);
+    void TransferToGPU(const Matrix4x4 &viewProjection);
 
     // vector から list へ変更
     std::list<ParticleData> particles_;

@@ -18,6 +18,7 @@
 
 #include "Effect/ParticleCommon.h"
 #include "Effect/ParticleManager.h"
+#include "Effect/SnowParticle.h"
 
 class WindowsApplication {
 public:
@@ -48,7 +49,6 @@ private:
 
 	// パーティクル共通部・個別パーティクル
 	std::unique_ptr<ParticleCommon> particleCommon_;
-	std::unique_ptr<ParticleManager> particle_;
 
 	// --- DirectX関連以外のメンバ変数 ---
 	std::unique_ptr<SceneManager> sceneManager_;
@@ -70,6 +70,9 @@ private:
 	// DirectionalLight用 (シーン全体で使うため残す)
 	Microsoft::WRL::ComPtr<ID3D12Resource> directionalLightResource_;
 	DirectionalLight *directionalLightData_ = nullptr;
+
+	Microsoft::WRL::ComPtr<ID3D12Resource> materialResource = {};
+	Material *materialData = nullptr;
 
 #ifdef _DEBUG
 // リソースリークチェッカー

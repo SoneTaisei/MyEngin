@@ -8,6 +8,7 @@
 
 class SpriteCommon;
 class ModelCommon;
+class ParticleCommon;
 
 class SceneManager {
 public:
@@ -24,6 +25,7 @@ public:
     void SetSpriteCommon(SpriteCommon *spriteCommon) { spriteCommon_ = spriteCommon; }
 
     void SetModelCommon(ModelCommon *modelCommon) { modelCommon_ = modelCommon; }
+    void SetParticleCommon(ParticleCommon *particleCommon) { particleCommon = particleCommon_; }
 
     // SpriteCommonを取得する関数
     SpriteCommon *GetSpriteCommon() const { return spriteCommon_; }
@@ -34,4 +36,5 @@ private:
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
     SpriteCommon *spriteCommon_ = nullptr;
     ModelCommon *modelCommon_ = nullptr;
+    ParticleCommon *particleCommon_ = nullptr;
 };

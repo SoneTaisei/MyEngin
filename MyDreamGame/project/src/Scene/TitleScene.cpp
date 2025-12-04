@@ -15,6 +15,16 @@ TitleScene::~TitleScene() {
 void TitleScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList) {
 	commandList_ = commandList;
 
+	// 1. 画像をロードしてハンドルを取得 (TextureManagerに任せる)
+	uint32_t uvCheckerIndex = TextureManager::GetInstance()->Load("resources/uvChecker.png", commandList_.Get());
+	D3D12_GPU_DESCRIPTOR_HANDLE textureHandle = TextureManager::GetInstance()->GetGpuHandle(uvCheckerIndex);
+
+	std::unique_ptr<Model> playerModel = std::make_unique<Model>();
+	playerModel->Initialize(modelCommon_, "resources/plane", "plane.obj");
+	playerModel->SetTextureHandle(textureHandle);
+	playerModel->SetRotation({ 0.0f,0.0f,0.0f });
+	playerModel_ = playerModel.get();
+	models_.push_back(std::move(playerModel));
 }
 
 void TitleScene::Update(SceneManager *sceneManager) {

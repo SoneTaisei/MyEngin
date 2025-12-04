@@ -20,6 +20,8 @@ private:
     Transform transform_ = {};
     Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList_;
 
+    Model *playerModel_ = nullptr;
+
     std::vector<std::unique_ptr<Model>> models_;
     std::vector<std::unique_ptr<Sprite>> sprites_;
     std::vector<std::unique_ptr<ParticleManager>> particle_;

@@ -165,7 +165,7 @@ void ParticleManager::Emit(const Emitter &emitter) {
     }
 }
 
-void ParticleManager::Update(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix) {
+void ParticleManager::Update() {
 }
 
 void ParticleManager::DrawImGui() {
@@ -180,8 +180,12 @@ void ParticleManager::DrawImGui() {
     ImGui::DragFloat("Emitter Frequency", &emitter_.frequency, 0.01f, 0.0f, 10.0f);
 }
 
-void ParticleManager::Draw() {
+void ParticleManager::Draw(const Matrix4x4 &viewProjection) {
     ID3D12GraphicsCommandList *commandList = particleCommon_->GetCommandList();
+
+    // GPU転送処理呼び出し (引数減った)
+    TransferToGPU(viewProjection);
+
     particleCommon_->SetBlendMode(blendMode_);
 
     // 描画前にParticleCommonへモードを設定
@@ -209,7 +213,10 @@ void ParticleManager::Draw() {
     }
 }
 
-void ParticleManager::TransferToGPU(const Matrix4x4 &viewProjection, const Matrix4x4 &cameraMatrix) {
+void ParticleManager::TransferToGPU(const Matrix4x4 &viewProjection) {
+
+    // ★ここで ParticleCommon からカメラ行列をもらう！
+    Matrix4x4 cameraMatrix = particleCommon_->GetCameraMatrix();
 
     numActiveParticles_ = 0;
 
