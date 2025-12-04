@@ -28,12 +28,6 @@ void GameScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> com
 
     // 6. リストに所有権を移動 (push_back)
     particles_.push_back(std::move(snowParticle));
-
-
-    // エミッタ設定
-    snowEmitter_.transform.translate = { 0.0f, 0.0f, 0.0f };
-    snowEmitter_.count = 5;
-    snowEmitter_.frequency = 1.0f / 60.0f;
 }
 
 void GameScene::Update(SceneManager *sceneManager) {
