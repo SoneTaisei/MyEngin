@@ -20,7 +20,6 @@ void SnowParticle::Update() {
         Emit(emitter_); // 親クラスのEmitを呼ぶ
     }
 
-
     // ■■■ 2. 既存パーティクルの更新 (元の処理) ■■■
     for(auto it = particles_.begin(); it != particles_.end(); ) {
         // ... (省略：元の移動処理や寿命チェック) ...
@@ -40,6 +39,7 @@ void SnowParticle::Update() {
         it->transform.translate.z += it->velocity.z * kDeltaTime;
 
         it->currentTime += kDeltaTime;
+        it->color = { 1.0f,1.0f,1.0f,0.5f };
         ++it;
     }
 }
