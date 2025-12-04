@@ -150,6 +150,7 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Effect\SnowParticle.cpp" />
     <ClCompile Include="src\Graphics\GameCamera.cpp" />
     <ClCompile Include="src\Graphics\Camera.cpp" />
     <ClCompile Include="src\Effect\ParticleManager.cpp" />
@@ -234,6 +235,7 @@
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\Effect\SnowParticle.h" />
     <ClInclude Include="src\Graphics\GameCamera.h" />
     <ClInclude Include="src\Graphics\Camera.h" />
     <ClInclude Include="src\Effect\ParticleManager.h" />

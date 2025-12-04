@@ -24,14 +24,22 @@ public:
     virtual void Draw(const Matrix4x4 &viewProjectionMatrix) = 0;
 
     // セット用関数
-    void SetSpriteCommon(SpriteCommon *spriteCommon) { spriteCommon_ = spriteCommon; }
+    void SetSpriteCommon(SpriteCommon* spriteCommon) {
+     // std::move で所有権を渡す
+        spriteCommon_ = spriteCommon;
+    }
 
-    virtual void SetModelCommon(ModelCommon *modelCommon) { modelCommon_ = modelCommon; }
+    virtual void SetModelCommon(ModelCommon* modelCommon) {
+        modelCommon_ = modelCommon;
+    }
 
+    virtual void SetParticleCommon(std::unique_ptr<ParticleCommon> particleCommon) {
+        particleCommon_ = std::move(particleCommon);
+    }
 protected:
     // 継承先(TitleSceneなど)で使えるようにする
     SpriteCommon *spriteCommon_ = nullptr;
-    ModelCommon *modelCommon_ = nullptr;
-    ParticleCommon *particleCommon_ = nullptr;
+    ModelCommon* modelCommon_ = nullptr;
+    std::unique_ptr<ParticleCommon> particleCommon_ = nullptr;
     
 };

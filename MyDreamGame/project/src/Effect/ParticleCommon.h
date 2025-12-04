@@ -41,6 +41,18 @@ public:
     const D3D12_VERTEX_BUFFER_VIEW &GetVertexBufferView() const { return vertexBufferView_; }
     const Microsoft::WRL::ComPtr<ID3D12RootSignature> &GetRootSignature() const { return rootSignature_; }
     UINT GetVertexCount() const { return static_cast<UINT>(vertices_.size()); }
+    // カメラ行列をセットする関数
+    void SetCamera(const Matrix4x4 &cameraMatrix) {
+        cameraMatrix_ = cameraMatrix;
+    }
+
+    // 保存したカメラ行列を取得する関数 (ParticleManagerが使う)
+    const Matrix4x4 &GetCameraMatrix() const {
+        return cameraMatrix_;
+    }
+
+    // DrawAllの引数は viewProjection だけでOK
+    void DrawAll(const Matrix4x4 &viewProjection);
 
 private:
     void CreateRootSignature();
@@ -70,4 +82,7 @@ private:
     std::vector<ParticleVertexData> vertices_;
     Microsoft::WRL::ComPtr<ID3D12Resource> vertexResource_;
     D3D12_VERTEX_BUFFER_VIEW vertexBufferView_{};
+
+    // カメラ行列保存用
+    Matrix4x4 cameraMatrix_ = TransformFunctions::MakeIdentity4x4();
 };

@@ -67,9 +67,10 @@ void ParticleCommon::RemoveParticle(ParticleManager *ParticleManager) {
 }
 
 // 一括描画
-void ParticleCommon::DrawAll() {
+void ParticleCommon::DrawAll(const Matrix4x4 &viewProjection) {
     for(ParticleManager *particle : particles_) {
-        particle->Draw();
+        // マネージャのDrawに viewProjection だけ渡す
+        particle->Draw(viewProjection);
     }
 }
 
@@ -98,7 +99,7 @@ void ParticleCommon::CreateRootSignature() {
 
     // [2] Texture (DescriptorTable t3)
     D3D12_DESCRIPTOR_RANGE descriptorRangeTexture[1] = {};
-    descriptorRangeTexture[0].BaseShaderRegister = 3; // t3
+    descriptorRangeTexture[0].BaseShaderRegister = 0; // t3
     descriptorRangeTexture[0].NumDescriptors = 1;
     descriptorRangeTexture[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     descriptorRangeTexture[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;

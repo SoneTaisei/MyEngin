@@ -109,12 +109,7 @@ void WindowsApplication::Initialize() {
 	// ParticleCommon の生成と初期化
 	particleCommon_ = std::make_unique<ParticleCommon>();
 	particleCommon_->Initialize(device);
-
-	// Particle (インスタンス) の生成と初期化
-	particle_ = std::make_unique<ParticleManager>();
-	// モデルやテクスチャのロード、初期設定
-	// index 99 は仮のSRVインデックス、10はパーティクル数
-	particle_->Initialize(commandList,particleCommon_.get(), 10, "./resources/circle.png", 99,BlendMode::kBlendModeAdd);
+	sceneManager_->SetParticleCommon(particleCommon_.get());
 
 
 	// ViewProjectionリソースの作成
@@ -164,6 +159,15 @@ void WindowsApplication::Initialize() {
 
 	// TimeManager を初期化
 	//TimeManager::GetInstance().Initialize();
+
+	const UINT materialBufferSize = (sizeof(Material) + 255) & ~255u;
+	materialResource = CreateBufferResource(device, materialBufferSize);
+	materialData = nullptr;
+	materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
+	materialData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
+	materialData->lightingType = 0;
+	materialData->uvTransform = TransformFunctions::MakeIdentity4x4();
+	materialResource->Unmap(0, nullptr);
 
 #ifdef _DEBUG
 // リソースリークチェッカーのインスタンスを作成
@@ -216,6 +220,18 @@ void WindowsApplication::Run() {
 					isDebugCameraActive_ = true;
 				}
 			}
+
+			ImGui::Begin("Debug Status");
+
+			if(isDebugCameraActive_) {
+				// ONなら緑色で表示
+				ImGui::TextColored(ImVec4(0.0f, 1.0f, 0.0f, 1.0f), "Debug Camera: ON");
+			} else {
+				// OFFなら灰色で表示
+				ImGui::TextColored(ImVec4(0.5f, 0.5f, 0.5f, 1.0f), "Debug Camera: OFF");
+			}
+
+			ImGui::End();
 		#endif
 
 		// ★ 5. アクティブなカメラだけを更新する
@@ -239,22 +255,15 @@ void WindowsApplication::Run() {
 				activeCamera_->GetTranslation()   // Translate (現在アクティブなカメラの座標)
 			);
 
-
-			particle_->DrawImGui();
-
-			// パーティクルの更新
-			particle_->Update(viewProjectionData_->viewProjectionMatrix,cameraMatrix);
-
 			// --- 描画処理 (Draw) ---
 			dxCommon_->PreDraw();
 
 			ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList();
 
-			// 定数バッファの設定 (ViewProjection, Lightなど共通のもの)
-			// ※RootSignatureの定義順に依存しますが、ParticleCommon内で再設定しても良いし、
-			//   ここで全体設定として入れておくのもありです。
-			//   ただしParticleCommon::PreDrawでRootSignatureが変わるとリセットされるため、
-			//   Particleを描画する直前にセットするのが最も安全です。
+			// 定数バッファの設定 (これはゲーム固有の描画処理)
+			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(3, viewProjectionResource_->GetGPUVirtualAddress());
+			commandList->SetGraphicsRootConstantBufferView(4, directionalLightResource_->GetGPUVirtualAddress());
 
 			// ModelCommonの描画前準備
 			modelCommon_->PreDraw(commandList);
@@ -272,8 +281,6 @@ void WindowsApplication::Run() {
 			// ※ ParticleCommon::CreateRootSignature の定義順序に合わせる
 			// [3] DirectionalLight (CBV b1)
 			commandList->SetGraphicsRootConstantBufferView(3, directionalLightResource_->GetGPUVirtualAddress());
-
-			particle_->Draw();
 
 			// ImGuiの描画
 			ImGui::Render();
@@ -301,7 +308,6 @@ void WindowsApplication::Finalize() {
 	}
 
 	// パーティクルの解放 (unique_ptrなので自動解放されるが明示的にも書ける)
-	particle_.reset();
 	particleCommon_.reset();
 
 	// その他マネージャクラスの解放
