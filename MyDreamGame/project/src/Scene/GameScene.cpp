@@ -20,7 +20,7 @@ void GameScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> com
     // 4. 初期化
     snowParticle->Initialize(commandList.Get(), particleCommon_.get(), 1000, "resources/circle.png", srvIndex_, BlendMode::kBlendModeAdd);
 
-    // ★重要: Commonに描画登録する (Modelと同じ仕組みにする)
+    // Commonに描画登録する (Modelと同じ仕組みにする)
     particleCommon_->AddParticle(snowParticle.get());
 
     // 5. エミッタ用に生ポインタを保存しておく
