@@ -123,7 +123,6 @@ ParticleData ParticleManager::MakeNewParticle(const Vector3 &translate) {
 
     p.transform.scale = { 1.0f, 1.0f, 1.0f };
     p.transform.rotate = { 0.0f, 0.0f, 0.0f };
-    p.color = { distColor(randomEngine_), distColor(randomEngine_), distColor(randomEngine_), 1.0f };
     p.lifeTime = distTime(randomEngine_);
     p.currentTime = 0.0f;
 
