@@ -1,0 +1,18 @@
+﻿# Target language
+Language: Cpp
+
+# Base style: LLVM (Opening braces on the same line)
+BasedOnStyle: LLVM
+
+# Indentation settings: 4 spaces
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+
+# Access modifiers (public/private) position
+# -4 moves them to the far left, matching the class definition
+AccessModifierOffset: -4
+
+# Line breaking settings
+# 0 means no limit (disable automatic line wrapping)
+ColumnLimit: 0
