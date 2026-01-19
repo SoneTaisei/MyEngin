@@ -109,7 +109,7 @@ void WindowsApplication::Initialize() {
 	// ParticleCommon の生成と初期化
 	particleCommon_ = std::make_unique<ParticleCommon>();
 	particleCommon_->Initialize(device);
-	sceneManager_->SetParticleCommon(particleCommon_.get());
+    sceneManager_->SetParticleCommon(particleCommon_.get());
 
 
 	// ViewProjectionリソースの作成
@@ -165,8 +165,9 @@ void WindowsApplication::Initialize() {
 	materialData = nullptr;
 	materialResource->Map(0, nullptr, reinterpret_cast<void **>(&materialData));
 	materialData->color = { 1.0f, 1.0f, 1.0f, 1.0f };
-	materialData->lightingType = 0;
+	materialData->lightingType = 1;
 	materialData->uvTransform = TransformFunctions::MakeIdentity4x4();
+    materialData->shininess = 50.0f;
 	materialResource->Unmap(0, nullptr);
 
 #ifdef _DEBUG
@@ -232,6 +233,25 @@ void WindowsApplication::Run() {
 			}
 
 			ImGui::End();
+
+			ImGui::Begin("Global Lighting Manager"); // ウィンドウ名！
+
+            // 1. ライトの向き (X, Y, Z) をスライダーでいじる！
+            // 光の向きは "Direction" だから、直感的！
+            ImGui::DragFloat3("Sun Direction", &directionalLightData_->direction.x, 0.01f, -1.0f, 1.0f);
+
+            // 2. ライトの色 (R, G, B, A) をカラーピッカーで変える！
+            ImGui::ColorEdit4("Sun Color", &directionalLightData_->color.x);
+
+            // 3. ライトの強さ (Intensity) もあるならここで！
+            // ImGui::DragFloat("Sun Intensity", &directionalLightData_->intensity, 0.01f, 0.0f, 10.0f);
+
+            // ⚠ 重要：方向ベクトルは正規化（長さを1に）しておかないと計算がおかしくなることがあるので、
+            // Vector3のNormalize関数などがあれば通しておくと完璧です！
+            // directionalLightData_->direction = Normalize(directionalLightData_->direction);
+
+            ImGui::End();
+
 		#endif
 
 		// ★ 5. アクティブなカメラだけを更新する
@@ -246,6 +266,8 @@ void WindowsApplication::Run() {
 			Matrix4x4 projectionMatrix = debugCamera_->GetProjectionMatrix();
 			viewProjectionData_->viewProjectionMatrix = TransformFunctions::Multiply(viewMatrix, projectionMatrix);
 			viewProjectionData_->cameraPosition = debugCamera_->GetTranslation();
+			// --- 描画処理 (Draw) ---
+			dxCommon_->PreDraw();
 
 			sceneManager_->Update();
 
@@ -255,10 +277,11 @@ void WindowsApplication::Run() {
 				activeCamera_->GetTranslation()   // Translate (現在アクティブなカメラの座標)
 			);
 
-			// --- 描画処理 (Draw) ---
-			dxCommon_->PreDraw();
 
 			ID3D12GraphicsCommandList *commandList = dxCommon_->GetCommandList();
+
+			ID3D12DescriptorHeap *descriptorHeaps[] = {TextureManager::GetInstance()->GetSrvDescriptorHeap()};
+            commandList->SetDescriptorHeaps(1, descriptorHeaps);
 
 			// 定数バッファの設定 (これはゲーム固有の描画処理)
 			commandList->SetGraphicsRootConstantBufferView(0, materialResource->GetGPUVirtualAddress());

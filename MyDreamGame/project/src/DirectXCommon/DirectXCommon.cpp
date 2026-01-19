@@ -225,7 +225,7 @@ void DirectXCommon::CreatePipelines() {
     descriptionRootSignature.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
 
     D3D12_DESCRIPTOR_RANGE descriptorRange[2] = {};
-    descriptorRange[0].BaseShaderRegister = 3;
+    descriptorRange[0].BaseShaderRegister = 0;
     descriptorRange[0].NumDescriptors = 1;
     descriptorRange[0].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_SRV;
     descriptorRange[0].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
@@ -240,11 +240,10 @@ void DirectXCommon::CreatePipelines() {
     rootParameters[0].Descriptor.ShaderRegister = 0;
     rootParameters[0].Descriptor.RegisterSpace = 0;
 
-    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_32BIT_CONSTANTS;
-    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX;
-    rootParameters[1].Constants.Num32BitValues = sizeof(TransformMatrix) / 4;
-    rootParameters[1].Constants.ShaderRegister = 0;
-    rootParameters[1].Constants.RegisterSpace = 0;
+    rootParameters[1].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;     // CBVを指定
+    rootParameters[1].ShaderVisibility = D3D12_SHADER_VISIBILITY_VERTEX; // VSで使う
+    rootParameters[1].Descriptor.ShaderRegister = 0;                     // register(b0)
+    rootParameters[1].Descriptor.RegisterSpace = 0;
 
     rootParameters[2].ParameterType = D3D12_ROOT_PARAMETER_TYPE_DESCRIPTOR_TABLE;
     rootParameters[2].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
