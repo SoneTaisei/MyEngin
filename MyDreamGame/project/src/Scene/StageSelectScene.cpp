@@ -19,11 +19,22 @@ void StageSelectScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandLi
     uint32_t skydomeIndex = TextureManager::GetInstance()->Load("resources/monsterBall.png", commandList_);
     D3D12_GPU_DESCRIPTOR_HANDLE skydomeTH = TextureManager::GetInstance()->GetGpuHandle(skydomeIndex);
 
+    uint32_t backGroundIndex = TextureManager::GetInstance()->Load("resources/monsterBall.png", commandList_);
+    D3D12_GPU_DESCRIPTOR_HANDLE backGroundTH = TextureManager::GetInstance()->GetGpuHandle(backGroundIndex);
+
+    std::unique_ptr<Model> backGroundModel = std::make_unique<Model>();
+    backGroundModel->Initialize(modelCommon_, "resources/plane", "plane.obj");
+    backGroundModel->SetTextureHandle(backGroundTH);
+    backGroundModel->SetRotation({0.0f, 0.0f, 0.0f});
+    models_.push_back(std::move(backGroundModel));
+
     std::unique_ptr<Model> skydomeModel = std::make_unique<Model>();
     skydomeModel->Initialize(modelCommon_, "resources/sphere", "sphere.obj");
     skydomeModel->SetTextureHandle(skydomeTH);
     skydomeModel->SetRotation({0.0f, 0.0f, 0.0f});
     models_.push_back(std::move(skydomeModel));
+
+    
 }
 
 void StageSelectScene::Update(SceneManager *sceneManager) {

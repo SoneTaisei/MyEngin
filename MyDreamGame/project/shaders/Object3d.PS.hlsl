@@ -21,7 +21,23 @@ float4 main(VertexShaderOutput input) : SV_TARGET {
         discard;
     }
     
-    if (gMaterial.lightingType != 0) {
+    if (gMaterial.lightingType == 2) {
+        float3 normal = normalize(input.normal);
+        float3 lightDir = normalize(-gDirectionalLight.direction);
+        float3 toEye = normalize(gCamera.worldPosition - input.worldPosition);
+        
+        float rim = 1.0f - saturate(dot(normal, toEye));
+        float fresnel = pow(rim, 3.0f);
+        
+        float3 halfVector = normalize(lightDir + toEye);
+        float specularPow = pow(saturate(dot(normal, halfVector)), 256.0f);
+        float3 specular = float3(1.0f, 1.0f, 1.0f) * gDirectionalLight.intensity * specularPow;
+        outputColor.rgb = textureColor.rgb * gMaterial.color.rgb + specular + (fresnel * 0.5f);
+        
+        float alphaBase = 0.3f;
+        outputColor.a = saturate(alphaBase + fresnel) * gMaterial.color.a;
+    
+    } else if (gMaterial.lightingType != 0) {
         
         float3 normal = normalize(input.normal);
         float3 lightDir = normalize(-gDirectionalLight.direction);
