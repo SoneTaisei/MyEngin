@@ -42,7 +42,8 @@ float4 main(VertexShaderOutput input) : SV_TARGET {
         
         // 💡 逆二乗則による減衰係数の計算
         float distance = length(gPointLight.position - input.worldPosition); // ポイントライトへの距離
-        float factor = pow(saturate(-distance/gPointLight.radius+1.0),gPointLight.decay); // 逆二乗則による減衰係数
+        float factor = 1.0f / (distance * distance); // 逆二乗則による減衰係数
+        //float factor = pow(saturate(-distance/gPointLight.radius+1.0),gPointLight.decay); // 逆二乗則による減衰係数
 
         // ライトの向きと法線の計算
         float3 pointLightDir = normalize(input.worldPosition - gPointLight.position);
