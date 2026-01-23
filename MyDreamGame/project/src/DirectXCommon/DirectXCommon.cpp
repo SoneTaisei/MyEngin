@@ -234,7 +234,7 @@ void DirectXCommon::CreatePipelines() {
     descriptorRange[1].RangeType = D3D12_DESCRIPTOR_RANGE_TYPE_CBV;
     descriptorRange[1].OffsetInDescriptorsFromTableStart = D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND;
 
-    D3D12_ROOT_PARAMETER rootParameters[5] = {};
+    D3D12_ROOT_PARAMETER rootParameters[6] = {};
     rootParameters[0].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
     rootParameters[0].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
     rootParameters[0].Descriptor.ShaderRegister = 0;
@@ -259,6 +259,11 @@ void DirectXCommon::CreatePipelines() {
     rootParameters[4].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
     rootParameters[4].Descriptor.ShaderRegister = 1;
     rootParameters[4].Descriptor.RegisterSpace = 0;
+
+    rootParameters[5].ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;
+    rootParameters[5].ShaderVisibility = D3D12_SHADER_VISIBILITY_PIXEL;
+    rootParameters[5].Descriptor.ShaderRegister = 2; // ここで register(b2) を指定
+    rootParameters[5].Descriptor.RegisterSpace = 0;
 
     descriptionRootSignature.pParameters = rootParameters;
     descriptionRootSignature.NumParameters = _countof(rootParameters);
@@ -314,8 +319,9 @@ void DirectXCommon::CreatePipelines() {
     blendDesc.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ZERO;
 
     D3D12_RASTERIZER_DESC rasterizerDesc{};
-    rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
-    rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+    rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;  // 背面をカリングする
+    rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID; // 中身を塗りつぶす
+    rasterizerDesc.FrontCounterClockwise = TRUE;
 
     Microsoft::WRL::ComPtr<IDxcBlob> vertexShaderBlob = CompileShader(L"shaders/Object3D.VS.hlsl", L"vs_6_0", dxcUtils.Get(), dxcCompiler.Get(), includeHandler.Get());
     assert(vertexShaderBlob != nullptr);

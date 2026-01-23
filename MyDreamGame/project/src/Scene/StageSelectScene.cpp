@@ -24,23 +24,28 @@ void StageSelectScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandLi
     skydomeModel->SetTextureHandle(skydomeTH);
     skydomeModel->SetRotation({0.0f, 0.0f, 0.0f});
     models_.push_back(std::move(skydomeModel));
+
+    uint32_t terrainIndex = TextureManager::GetInstance()->Load("resources/terrain/grass.png", commandList_);
+    D3D12_GPU_DESCRIPTOR_HANDLE terrainTH = TextureManager::GetInstance()->GetGpuHandle(terrainIndex);
+
+    std::unique_ptr<Model> terrainModel = std::make_unique<Model>();
+    terrainModel->Initialize(modelCommon_, "resources/terrain", "terrain.obj");
+    terrainModel->SetTextureHandle(terrainTH);
+    terrainModel->SetRotation({0.0f, 0.0f, 0.0f});
+    models_.push_back(std::move(terrainModel));
 }
 
 void StageSelectScene::Update(SceneManager *sceneManager) {
 
+    // --- 既存のモデルデバッグ表示 ---
     ImGui::Begin("Debug Models");
-
     for (int i = 0; i < models_.size(); ++i) {
-        // 名前を自動生成（Model 0, Model 1...）
         std::string name = "Model " + std::to_string(i);
-
-        // 便利関数にポイっと渡すだけ！
         ShowModelGui(name, models_[i].get());
     }
-
     ImGui::End();
 
-    // スペースキーが押されたらゲームシーンへ
+    // シーン遷移の処理
     if (KeyboardInput::GetInstance()->IsKeyPressed(DIK_SPACE)) {
         sceneManager->ChangeScene(new GameScene());
     }
