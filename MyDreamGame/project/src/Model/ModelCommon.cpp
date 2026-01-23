@@ -37,7 +37,7 @@ void ModelCommon::Initialize(ID3D12Device *device) {
     mappedMaterial_->shininess = 50.0f;
 
     // ライトとカメラの初期値
-    *mappedDirectionalLight_ = {{1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}, 1.0f};
+    *mappedDirectionalLight_ = {{1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, -1.0f, 0.0f}, 0.0f};
     *mappedPointLight_ = {{1.0f, 1.0f, 1.0f, 1.0f}, {0.0f, 2.0f, 0.0f}, 1.0f, 10.0f, 1.0f};
     *mappedCamera_ = {{0.0f, 0.0f, -10.0f}};
 }

@@ -36,26 +36,6 @@ void StageSelectScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandLi
 }
 
 void StageSelectScene::Update(SceneManager *sceneManager) {
-    // 1. ModelCommonからライトのポインタを取得
-    PointLight *pointLight = modelCommon_->GetPointLight();
-
-    // 2. ImGuiでポイントライトの設定ウィンドウを作成
-    ImGui::Begin("Point Light Settings");
-
-    // 座標の調整
-    ImGui::DragFloat3("Position", &pointLight->position.x, 0.1f);
-
-    // 色の調整
-    ImGui::ColorEdit4("Color", &pointLight->color.x);
-
-    // 輝度（強度）の調整
-    ImGui::DragFloat("Intensity", &pointLight->intensity, 0.01f, 0.0f, 10.0f);
-
-    // ★ 逆二乗則に効くパラメータ
-    ImGui::DragFloat("Radius", &pointLight->radius, 0.1f, 0.0f, 100.0f);
-    ImGui::DragFloat("Decay", &pointLight->decay, 0.01f, 0.0f, 10.0f);
-
-    ImGui::End();
 
     // --- 既存のモデルデバッグ表示 ---
     ImGui::Begin("Debug Models");

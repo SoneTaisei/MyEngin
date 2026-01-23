@@ -234,21 +234,24 @@ void WindowsApplication::Run() {
 
 			ImGui::End();
 
-			ImGui::Begin("Global Lighting Manager");
+			// 1. ModelCommonからライトのポインタを取得
+            PointLight *pointLight = modelCommon_->GetPointLight();
 
-            // 💡 ModelCommonから、現在描画に使っている「本物のライト」のポインタをもらってくる
-            DirectionalLight *sun = modelCommon_->GetDirectionalLight();
-            PointLight *bulb = modelCommon_->GetPointLight();
+            // 2. ImGuiでポイントライトの設定ウィンドウを作成
+            ImGui::Begin("Point Light Settings");
 
-            // 💡 「sun」や「bulb」を直接操作するように書き換える
-            ImGui::DragFloat3("Sun Direction", &sun->direction.x, 0.01f);
+            // 座標の調整
+            ImGui::DragFloat3("Position", &pointLight->position.x, 0.1f);
 
-            // 💡 ここが重要！太陽を消したい（ポイントライトだけにしたい）なら
-            // 強度(intensity)を 0.0f に設定します。
-            ImGui::DragFloat("Sun Intensity", &sun->intensity, 0.01f, 0.0f, 1.0f);
+            // 色の調整
+            ImGui::ColorEdit4("Color", &pointLight->color.x);
 
-            ImGui::DragFloat3("Point Light Pos", &bulb->position.x, 0.1f);
-            ImGui::DragFloat("Point Light Radius", &bulb->radius, 0.1f);
+            // 輝度（強度）の調整
+            ImGui::DragFloat("Intensity", &pointLight->intensity, 0.01f, 0.0f, 10.0f);
+
+            // ★ 逆二乗則に効くパラメータ
+            ImGui::DragFloat("Radius", &pointLight->radius, 0.1f, 0.0f, 100.0f);
+            ImGui::DragFloat("Decay", &pointLight->decay, 0.01f, 0.0f, 10.0f);
 
             ImGui::End();
 
