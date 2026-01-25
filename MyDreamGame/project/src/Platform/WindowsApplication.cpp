@@ -234,24 +234,56 @@ void WindowsApplication::Run() {
 
 			ImGui::End();
 
-			// 1. ModelCommonからライトのポインタを取得
-            PointLight *pointLight = modelCommon_->GetPointLight();
+			ImGui::Begin("Lighting Manager");
 
-            // 2. ImGuiでポイントライトの設定ウィンドウを作成
-            ImGui::Begin("Point Light Settings");
+            // 1. ライト種別の選択（0:平行, 1:点, 2:スポット）
+            static int lightType = 2; // 初期値をスポットライトに
+            ImGui::Text("Light Select");
+            ImGui::RadioButton("Directional", &lightType, 0);
+            ImGui::SameLine();
+            ImGui::RadioButton("Point", &lightType, 1);
+            ImGui::SameLine();
+            ImGui::RadioButton("Spot", &lightType, 2);
 
-            // 座標の調整
-            ImGui::DragFloat3("Position", &pointLight->position.x, 0.1f);
+            ImGui::Separator();
 
-            // 色の調整
-            ImGui::ColorEdit4("Color", &pointLight->color.x);
+            // 2. 選択されたライト以外を消灯し、それぞれの設定を表示
+            DirectionalLight *dLight = modelCommon_->GetDirectionalLight();
+            PointLight *pLight = modelCommon_->GetPointLight();
+            SpotLight *sLight = modelCommon_->GetSpotLight();
 
-            // 輝度（強度）の調整
-            ImGui::DragFloat("Intensity", &pointLight->intensity, 0.01f, 0.0f, 10.0f);
+            if (lightType == 0) { // 平行光源
+                pLight->intensity = 0.0f;
+                sLight->intensity = 0.0f;
+                ImGui::DragFloat("Directional Intensity", &dLight->intensity, 0.01f, 0.0f, 10.0f);
+                ImGui::DragFloat3("Direction", &dLight->direction.x, 0.01f);
+            } else if (lightType == 1) { // 点光源
+                dLight->intensity = 0.0f;
+                sLight->intensity = 0.0f;
+                ImGui::DragFloat3("Point Position", &pLight->position.x, 0.1f);
+                ImGui::DragFloat("Point Radius", &pLight->radius, 0.1f);
+            } else if (lightType == 2) { // スポットライト
+                dLight->intensity = 0.0f;
+                pLight->intensity = 0.0f;
+                ImGui::DragFloat3("Spot Position", &sLight->position.x, 0.1f);
+                ImGui::DragFloat("Spot Intensity", &sLight->intensity, 0.01f, 0.0f, 10.0f);
+                if (ImGui::DragFloat3("Spot Direction", &sLight->direction.x, 0.01f)) {
+                    sLight->direction = TransformFunctions::Normalize(sLight->direction);
+                }
+                static float spotAngle = 30.0f;
+                if (ImGui::SliderFloat("Spot Angle", &spotAngle, 0.0f, 90.0f)) {
+                    sLight->cosAngle = std::cos(spotAngle * (std::numbers::pi_v<float> / 180.0f));
+                }
+            }
 
-            // ★ 逆二乗則に効くパラメータ
-            ImGui::DragFloat("Radius", &pointLight->radius, 0.1f, 0.0f, 100.0f);
-            ImGui::DragFloat("Decay", &pointLight->decay, 0.01f, 0.0f, 10.0f);
+            ImGui::Separator();
+
+            // 3. フォグライト（霧）の切り替え
+            static bool isFogEnable = false;
+            if (ImGui::Checkbox("Enable Fog Light Effect", &isFogEnable)) {
+                // マテリアルの未使用フラグなどを使ってシェーダーに伝える
+                // mappedMaterial_->enableFog = isFogEnable ? 1 : 0;
+            }
 
             ImGui::End();
 
