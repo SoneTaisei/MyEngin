@@ -7,8 +7,9 @@ on:
   workflow_dispatch:
 
 env:
-  SOLUTION_FILE_PATH: project/MyDreamGame.sln
-  CONFIGURATION: Debug  # 開発用なのでDebugビルド
+  # 正解のパスを指定
+  SOLUTION_FILE_PATH: MyDreamGame/project/MyDreamGame.sln
+  CONFIGURATION: Debug  # 開発中なのでDebugビルド
 
 jobs:
   build:
