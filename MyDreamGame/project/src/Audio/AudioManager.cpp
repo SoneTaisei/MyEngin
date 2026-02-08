@@ -17,6 +17,10 @@ void AudioManager::Initialize() {
 	// マスターボイスの生成
 	result = xAudio2_->CreateMasteringVoice(&masterVoice_);
 	assert(SUCCEEDED(result));
+
+	// Media Foundationの初期化
+    result = MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET);
+    assert(SUCCEEDED(result));
 }
 
 void AudioManager::Finalize() {
@@ -27,6 +31,8 @@ void AudioManager::Finalize() {
 		SoundUnload(&pair.second);
 	}
 	soundDatas_.clear();
+    // Media Foundationの終了処理
+    MFShutdown();
 	// 最後にXAudio2エンジンを解放する
 	xAudio2_.Reset();
 }
@@ -39,7 +45,7 @@ const std::string &AudioManager::LoadSound(const std::string &filename) {
 		return it->first;
 	}
 	// WAVファイルを読み込む
-	SoundData soundData = SoundLoadWave(filename.c_str());
+    SoundData soundData = SoundLoadMediaFoundation(filename.c_str());
 	// 読み込みに失敗していないかチェック
 	assert(soundData.pBuffer && "Failed to load sound file.");
 	// 読み込んだデータをマップに格納

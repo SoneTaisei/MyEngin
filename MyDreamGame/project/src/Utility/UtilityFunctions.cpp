@@ -697,3 +697,57 @@ bool IsKeyUp(BYTE keys) {
 	return false;
 }
 
+SoundData SoundLoadMediaFoundation(const char *filename) {
+    HRESULT hr;
+    Microsoft::WRL::ComPtr<IMFSourceReader> pSourceReader;
+
+    // 1. SourceReaderの作成
+    std::wstring wFilename = ConvertString(filename);
+    hr = MFCreateSourceReaderFromURL(wFilename.c_str(), nullptr, &pSourceReader);
+    assert(SUCCEEDED(hr));
+
+    // 2. 出力形式をPCM（解凍後の生データ）に設定
+    Microsoft::WRL::ComPtr<IMFMediaType> pTargetMediaType;
+    MFCreateMediaType(&pTargetMediaType);
+    pTargetMediaType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio);
+    pTargetMediaType->SetGUID(MF_MT_SUBTYPE, MFAudioFormat_PCM);
+    pSourceReader->SetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, nullptr, pTargetMediaType.Get());
+
+    // 3. 最終的な波形フォーマットを取得
+    Microsoft::WRL::ComPtr<IMFMediaType> pActualMediaType;
+    pSourceReader->GetCurrentMediaType(MF_SOURCE_READER_FIRST_AUDIO_STREAM, &pActualMediaType);
+
+    WAVEFORMATEX *pWfex;
+    UINT32 wfexSize;
+    MFCreateWaveFormatExFromMFMediaType(pActualMediaType.Get(), &pWfex, &wfexSize);
+
+    // 4. 全てのサンプルを読み込んでバッファに格納
+    std::vector<BYTE> audioData;
+    while (true) {
+        DWORD dwFlags = 0;
+        Microsoft::WRL::ComPtr<IMFSample> pSample;
+        hr = pSourceReader->ReadSample(MF_SOURCE_READER_FIRST_AUDIO_STREAM, 0, nullptr, &dwFlags, nullptr, &pSample);
+        if (FAILED(hr) || (dwFlags & MF_SOURCE_READERF_ENDOFSTREAM))
+            break;
+
+        Microsoft::WRL::ComPtr<IMFMediaBuffer> pBuffer;
+        pSample->ConvertToContiguousBuffer(&pBuffer);
+
+        BYTE *pData = nullptr;
+        DWORD cbCurrentLength = 0;
+        pBuffer->Lock(&pData, nullptr, &cbCurrentLength);
+        audioData.insert(audioData.end(), pData, pData + cbCurrentLength);
+        pBuffer->Unlock();
+    }
+
+    // SoundData構造体に詰めて返す
+    SoundData soundData = {};
+    soundData.wfex = *pWfex;
+    soundData.pBuffer = new BYTE[audioData.size()];
+    soundData.bufferSize = (unsigned int)audioData.size();
+    std::memcpy(soundData.pBuffer, audioData.data(), audioData.size());
+
+    CoTaskMemFree(pWfex); // MFが生成したフォーマット構造体を解放
+    return soundData;
+}
+
