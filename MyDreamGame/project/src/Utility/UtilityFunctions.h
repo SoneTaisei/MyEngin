@@ -78,3 +78,5 @@ bool IsKeyPressed(BYTE keys, BYTE preKeys);
 // 押されていないとき
 bool IsKeyUp(BYTE keys);
 
+SoundData SoundLoadMediaFoundation(const char *filename);
+
