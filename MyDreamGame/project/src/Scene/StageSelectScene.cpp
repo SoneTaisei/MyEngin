@@ -50,7 +50,7 @@ void StageSelectScene::Update(SceneManager *sceneManager) {
 
     // シーン遷移の処理
     if (KeyboardInput::GetInstance()->IsKeyPressed(DIK_SPACE)) {
-        sceneManager->ChangeScene(new GameScene());
+        sceneManager->ChangeScene(std::make_unique<GameScene>());
     }
 }
 

@@ -41,7 +41,7 @@ void GameScene::Update(SceneManager *sceneManager) {
 
     // スペースキーが押されたらタイトルシーンへ戻る
     if(KeyboardInput::GetInstance()->IsKeyPressed(DIK_SPACE)) {
-        sceneManager->ChangeScene(new TitleScene());
+        sceneManager->ChangeScene(std::make_unique<TitleScene>());
     }
 }
 

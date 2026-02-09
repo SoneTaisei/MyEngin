@@ -34,7 +34,7 @@ void TitleScene::Initialize(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> co
 void TitleScene::Update(SceneManager *sceneManager) {
     // シーン遷移処理
     if (KeyboardInput::GetInstance()->IsKeyPressed(DIK_SPACE)) {
-        sceneManager->ChangeScene(new StageSelectScene());
+        sceneManager->ChangeScene(std::make_unique<StageSelectScene>());
     }
 
 #ifdef USE_IMGUI

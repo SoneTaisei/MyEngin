@@ -124,7 +124,7 @@ void WindowsApplication::Initialize() {
     sceneManager_->SetParticleCommon(particleCommon_.get());
 
     // 初期シーンはアプリ層で生成して渡す
-    sceneManager_->ChangeScene(new TitleScene());
+    sceneManager_->ChangeScene(std::make_unique<TitleScene>());
 
     // ViewProjectionリソースの作成
     UINT viewProjectionSize = (sizeof(ViewProjection) + 255) & ~255;
@@ -414,33 +414,52 @@ void WindowsApplication::Run() {
 
 void WindowsApplication::Finalize() {
 #ifdef USE_IMGUI
-    // ImGui解放
+    // 1. ImGuiの終了処理 (GPUを使うので早めに消す)
     ImGui_ImplDX12_Shutdown();
     ImGui_ImplWin32_Shutdown();
     ImGui::DestroyContext();
 #endif
-    debugCamera_.reset();
-    gameCamera_.reset();
+
+    // 2. ゲーム層のマネージャー・共通部の解放
+    // 下にいくほど「土台」に近いものを消す順番にする
     sceneManager_.reset();
+    modelCommon_.reset(); // ★追加：Model共通部の実体を消す
 
     if (spriteCommon_) {
         spriteCommon_->Finalize();
         spriteCommon_.reset();
     }
-
-    // パーティクルの解放 (unique_ptrなので自動解放されるが明示的にも書ける)
     particleCommon_.reset();
 
-    // その他マネージャクラスの解放
+    // 3. WindowsApplication自身が持つ GPUリソース (ComPtr) のリセット
+    // 【重要】これらを dxCommon_ より先に消さないと Live Object 110 が出続けます
+    viewProjectionResource_.Reset();   // ★追加
+    directionalLightResource_.Reset(); // ★追加
+    materialResource.Reset();          // ★追加
+
+    // 4. 入力マネージャーの終了処理 (もし実装があれば呼ぶ)
+    // KeyboardInput::GetInstance()->Finalize();
+    // GamepadInput::GetInstance()->Finalize();
+
+    // 5. その他システムの解放
     AudioManager::Finalize();
     TextureManager::GetInstance()->Finalize();
 
-    // DirectXCommonの終了処理
+    // 6. Windows API 関連のクリーンアップ
+    // timeBeginPeriod(1) に対応する解除
+    timeEndPeriod(1); // ★追加：タイマー精度を元に戻す
+
+    // ウィンドウクラスの登録解除
+    UnregisterClass(wc_.lpszClassName, wc_.hInstance); // ★追加
+
+    // 7. 最後にすべての土台である DirectXCommon を消す
     if (dxCommon_) {
         dxCommon_->Finalize();
+        // ★重要：ここで reset() すると、この瞬間に Device が消えるため、
+        // 上記の 1〜5 がすべて終わっている必要があります。
         dxCommon_.reset();
     }
 
-    // COMの終了処理
+    // 8. COMの終了処理
     CoUninitialize();
 }

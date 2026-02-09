@@ -650,8 +650,8 @@ SoundData SoundLoadWave(const char *filename) {
 	}
 
 	// Dataチャンクのデータ部分読み込み
-	char *pBuffer = new char[data.size];
-	file.read(pBuffer, data.size);
+    auto pBuffer = std::make_unique<char[]>(data.size);
+    file.read(pBuffer.get(), data.size);
 
 	// waveファイルを閉じる
 	file.close();
@@ -663,7 +663,7 @@ SoundData SoundLoadWave(const char *filename) {
 	SoundData soundData = {};
 
 	soundData.wfex = format.fmt;
-	soundData.pBuffer = reinterpret_cast<BYTE *>(pBuffer);
+    soundData.pBuffer.reset(reinterpret_cast<BYTE *>(pBuffer.release()));
 	soundData.bufferSize = data.size;
 
 	return soundData;
@@ -672,9 +672,8 @@ SoundData SoundLoadWave(const char *filename) {
 
 void SoundUnload(SoundData *soundData) {
 	// バッファのメモリを解放
-	delete[] soundData->pBuffer;
+    soundData->pBuffer.reset();
 
-	soundData->pBuffer = 0;
 	soundData->bufferSize = 0;
 	soundData->wfex = {};
 }
@@ -753,9 +752,9 @@ SoundData SoundLoadMediaFoundation(const char *filename) {
     // SoundData構造体に詰めて返す
     SoundData soundData = {};
     soundData.wfex = *pWfex;
-    soundData.pBuffer = new BYTE[audioData.size()];
+    soundData.pBuffer = std::make_unique<BYTE[]>(audioData.size());
     soundData.bufferSize = (unsigned int)audioData.size();
-    std::memcpy(soundData.pBuffer, audioData.data(), audioData.size());
+    std::memcpy(soundData.pBuffer.get(), audioData.data(), audioData.size());
 
     CoTaskMemFree(pWfex); // MFが生成したフォーマット構造体を解放
     return soundData;
