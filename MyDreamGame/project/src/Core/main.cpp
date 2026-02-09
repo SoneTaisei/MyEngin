@@ -7,16 +7,17 @@
 int WINAPI WinMain(HINSTANCE, HINSTANCE, LPSTR, int) {
 	// メモリリークチェック
 	_CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+    {
+        // WindowsApplicationクラスのインスタンスを生成
+        auto app = std::make_unique<WindowsApplication>();
 
-	// WindowsApplicationクラスのインスタンスを生成
-	// std::unique_ptr を使うと、スコープを抜けるときに自動で delete してくれるので安全です。
-	auto app = std::make_unique<WindowsApplication>();
+        // 初期化
+        app->Initialize();
 
-	// 初期化
-	app->Initialize();
+        // メインループの実行
+        app->Run();
 
-	// メインループの実行
-	app->Run();
-
+        app->Finalize();
+    }
 	return 0;
 }

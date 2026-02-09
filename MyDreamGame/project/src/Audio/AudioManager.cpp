@@ -4,7 +4,7 @@
 
 // 静的メンバ変数の実体を定義
 Microsoft::WRL::ComPtr<IXAudio2> AudioManager::xAudio2_ = nullptr;
-IXAudio2MasteringVoice *AudioManager::masterVoice_ = nullptr;
+std::unique_ptr<IXAudio2MasteringVoice, MasteringVoiceDeleter> AudioManager::masterVoice_ = nullptr;
 std::list<std::unique_ptr<IXAudio2SourceVoice, SourceVoiceDeleter>> AudioManager::playingVoices_;
 std::map<std::string, SoundData> AudioManager::soundDatas_;
 
@@ -15,8 +15,15 @@ void AudioManager::Initialize() {
 	assert(SUCCEEDED(result));
 
 	// マスターボイスの生成
-	result = xAudio2_->CreateMasteringVoice(&masterVoice_);
-	assert(SUCCEEDED(result));
+    // 1. まずは一時的な「生ポインタ」を用意する
+    IXAudio2MasteringVoice *pMasterVoiceRaw = nullptr;
+
+    // 2. 生成関数にそのポインタを渡す
+    result = xAudio2_->CreateMasteringVoice(&pMasterVoiceRaw);
+    assert(SUCCEEDED(result));
+
+    // 3. 成功したら、すぐに unique_ptr に所有権を渡す（管理を任せる）
+    masterVoice_.reset(pMasterVoiceRaw);
 
 	// Media Foundationの初期化
     result = MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET);
@@ -24,17 +31,25 @@ void AudioManager::Initialize() {
 }
 
 void AudioManager::Finalize() {
-	// すべての再生中ボイスを破棄する
-	playingVoices_.clear();
-	// 読み込んだ全てのサウンドデータを解放
-	for(auto &pair : soundDatas_) {
-		SoundUnload(&pair.second);
-	}
-	soundDatas_.clear();
-    // Media Foundationの終了処理
+    // 1. 再生中のボイスをすべて消す
+    playingVoices_.clear();
+
+    // 2. 読み込んだサウンドデータを解放
+    for (auto &pair : soundDatas_) {
+        SoundUnload(&pair.second);
+    }
+    soundDatas_.clear();
+
+    // 3. ★【重要】マスターボイスをエンジンより先に消す！
+    // unique_ptrの自動解放を待つと、下のxAudio2_.Reset()の後になってしまいクラッシュします。
+    masterVoice_.reset();
+
+    // 4. Media Foundationの終了処理
+    MFStartup(MF_VERSION, MFSTARTUP_NOSOCKET); // Initializeにあったので念のため
     MFShutdown();
-	// 最後にXAudio2エンジンを解放する
-	xAudio2_.Reset();
+
+    // 5. 最後にエンジンを解放する
+    xAudio2_.Reset();
 }
 
 const std::string &AudioManager::LoadSound(const std::string &filename) {
@@ -49,7 +64,7 @@ const std::string &AudioManager::LoadSound(const std::string &filename) {
 	// 読み込みに失敗していないかチェック
 	assert(soundData.pBuffer && "Failed to load sound file.");
 	// 読み込んだデータをマップに格納
-	soundDatas_[filename] = soundData;
+	soundDatas_[filename] = std::move(soundData);
 	// 格納したデータのキーを返す
 	return soundDatas_.find(filename)->first;
 }
@@ -76,7 +91,7 @@ void AudioManager::Play(const std::string &filename) {
 
 	// 3. 再生する波形データの設定
 	XAUDIO2_BUFFER buf{};
-	buf.pAudioData = soundData.pBuffer;
+	buf.pAudioData = soundData.pBuffer.get();
 	buf.AudioBytes = soundData.bufferSize;
 	buf.Flags = XAUDIO2_END_OF_STREAM;
 

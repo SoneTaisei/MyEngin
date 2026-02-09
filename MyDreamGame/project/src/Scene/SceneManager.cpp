@@ -41,12 +41,12 @@ void SceneManager::Draw(const Matrix4x4 &viewProjectionMatrix) {
     }
 }
 
-void SceneManager::ChangeScene(IScene *newScene) {
-    assert(newScene); // 渡されたシーンがnullptrでないことを確認
+void SceneManager::ChangeScene(std::unique_ptr<IScene> nextScene) {
+    assert(nextScene); // 渡されたシーンがnullptrでないことを確認
 
     // currentScene_ が未設定の場合、即時適用して初期化する（アプリ層がシーン生成するため）
     if (!currentScene_) {
-        currentScene_.reset(newScene);
+        currentScene_ = std::move(nextScene);
 
         if (spriteCommon_)
             currentScene_->SetSpriteCommon(spriteCommon_);
@@ -58,6 +58,6 @@ void SceneManager::ChangeScene(IScene *newScene) {
         currentScene_->Initialize(commandList_);
     } else {
         // 次のフレームで切り替える（安全な遷移）
-        nextScene_.reset(newScene);
+        nextScene_ = std::move(nextScene);
     }
 }
