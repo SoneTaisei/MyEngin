@@ -505,7 +505,16 @@ ModelData LoadModelFile(const std::string &directoryPath, const std::string &fil
     // 1. ファイルの読み込み
     // 資料にある通り、三角形化、巻き順反転、UV反転を指定
     const aiScene *scene = importer.ReadFile(filePath.c_str(),
-                                             aiProcess_Triangulate | aiProcess_FlipUVs);
+                                             // 1. すべての面を三角形に変換（DirectXが理解できる形式にする）
+                                             aiProcess_Triangulate |
+                                                 // 2. V軸を反転（glTFなどの左下原点を、DirectX標準の左上原点に合わせる）
+                                                 aiProcess_FlipUVs |
+                                                 // 3. 右手系から左手系へ変換（軸の反転や巻き順の調整をセットで行う）
+                                                 aiProcess_ConvertToLeftHanded |
+                                                 // 4. 法線がない場合に滑らかな法線を生成（ライティング計算に必須）
+                                                 aiProcess_GenSmoothNormals |
+                                                 // 5. ノード階層の変形を頂点に焼き付ける（glTFの回転ズレを直す今回の重要フラグ）
+                                                 aiProcess_PreTransformVertices);
 
     // メッシュがない場合はエラー
     assert(scene && scene->HasMeshes());
